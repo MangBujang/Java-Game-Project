@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Vyrn - Setup Karakter</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #2c3e50; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: #34495e; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 400px; text-align: center; }
+        input, select { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; box-sizing: border-box; }
+        button { background: #e67e22; color: white; border: none; padding: 15px 20px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; }
+        button:hover { background: #d35400; }
+        .element-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
+        .element-option { padding: 10px; border: 2px solid transparent; cursor: pointer; background: #2c3e50; border-radius: 8px; font-size: 12px; }
+        .element-option.selected { border-color: #e67e22; background: #465a6e; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Daftar Hero & Pet</h2>
+    <input type="text" id="name" placeholder="Nama Hero Anda..." required>
+    <input type="text" id="petName" placeholder="Nama Naga Anda..." required>
+    
+    <p>Pilih Elemen Starter:</p>
+    <div class="element-grid" id="elementGrid">
+        <div class="element-option" onclick="selectElement('FIRE', this)">FIRE 🔥</div>
+        <div class="element-option" onclick="selectElement('WATER', this)">WATER 💧</div>
+        <div class="element-option" onclick="selectElement('EARTH', this)">EARTH 🌿</div>
+        <div class="element-option" onclick="selectElement('WIND', this)">WIND 🌪️</div>
+        <div class="element-option" onclick="selectElement('ELECTRIC', this)">ELECTRIC ⚡</div>
+    </div>
+
+    <button onclick="submitSetup()">MULAI PETUALANGAN</button>
+</div>
+
+<script>
+    let selectedElement = "";
+
+    function selectElement(element, el) {
+        selectedElement = element;
+        // Reset warna semua opsi
+        document.querySelectorAll('.element-option').forEach(opt => opt.classList.remove('selected'));
+        // Beri warna pada yang dipilih
+        el.classList.add('selected');
+    }
+
+    function submitSetup() {
+        const heroName = document.getElementById('name').value;
+        const petName = document.getElementById('petName').value;
+
+        if (!heroName || !petName || !selectedElement) {
+            alert("Harap isi semua data dan pilih elemen!");
+            return;
+        }
+
+        const data = {
+            name: heroName,
+            petName: petName,
+            element: selectedElement
+        };
+
+        fetch('/api/setup/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.text())
+        .then(msg => {
+            alert(msg);
+            // Nanti kita arahkan ke halaman Map
+            window.location.href = "map3.html"; 
+        })
+        .catch(err => alert("Error: " + err));
+    }
+</script>
+
+</body>
+</html>

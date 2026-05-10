@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Dragon Monster Adventure - Proportional Parallax</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; }
+        canvas { display: block; width: 100vw; height: 100vh; background-color: #1a1a1a; }
+    </style>
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+const assetPaths = {
+    sky: 'assets/map_tiles/Battleground1/Bright/sky.png',
+    ruins_bg: 'assets/map_tiles/Battleground1/Bright/ruins_bg.png',
+    hills: 'assets/map_tiles/Battleground1/Bright/hills&trees.png',
+    ruins2: 'assets/map_tiles/Battleground1/Bright/ruins2.png',
+    ruins: 'assets/map_tiles/Battleground1/Bright/ruins.png',
+    ground: 'assets/map_tiles/Battleground1/Bright/stones&grass.png',
+    statue: 'assets/map_tiles/Battleground1/Bright/statue.png',
+
+    player_idle: 'assets/player/Wanderer Magican/Idle.png',
+    player_run: 'assets/player/Wanderer Magican/Run.png',
+    player_jump: 'assets/player/Wanderer Magican/Jump.png',
+
+    fire_dragon_idle: 'assets/dragons/idle_fire_dragon.png',
+    fire_dragon_fly: 'assets/dragons/fly_fire_dragon.png',
+
+    unicorn_idle: 'assets/dragons/unicorn_idle.png',
+
+};
+
+const images = {};
+let loadedImages = 0;
+const totalImages = Object.keys(assetPaths).length;
+
+function loadAssets() {
+    for (let key in assetPaths) {
+        const img = new Image();
+        img.src = assetPaths[key];
+        img.onload = () => {
+            images[key] = img;
+            loadedImages++;
+            if (loadedImages === totalImages) {
+                requestAnimationFrame(gameLoop);
+            }
+        };
+        img.onerror = () => console.error("Gagal memuat:", assetPaths[key]);
+    }
+}
+
+const layers = [
+    { img: 'sky', speed: 0, x: 0 },
+    { img: 'ruins_bg', speed: 0.2, x: 0 },
+    { img: 'hills', speed: 0.4, x: 0 },
+    { img: 'ruins2', speed: 0.6, x: 0 },
+    { img: 'ruins', speed: 0.8, x: 0 },
+    { img: 'ground', speed: 2.0, x: 0 }
+];
+
+
+const player = {
+    x: 150,
+    y: 0,
+    width: 128, 
+    height: 128,
+    speed: 5,
+    currentAction: 'player_idle',
+    frameX: 0,
+    maxFrames: 8,
+    frameTimer: 0,
+    frameInterval: 100,
+    velocityY: 0,
+    jumpForce: -18, // Sedikit lebih kuat untuk skala besar
+    gravity: 0.8,
+    isGrounded: false,
+    facingRight: true
+};
+
+const pet = {
+    x: 0,
+    y: 0,
+    width: 120,  // Sesuaikan dengan ukuran sprite naga
+    height: 120,
+    frameX: 0,
+    mode: 'fly',
+    currentAction: 'ide_fire_dragon',
+    maxFrames: 4,
+    frameTimer: 0,
+    frameInterval: 120,
+    floatOffset: 0, // Untuk efek melayang naik-turun
+    offsetX: -50,   // Posisi naga di belakang player (negatif berarti di kiri)
+    offsetY: -90,    // Posisi naga sedikit di atas kepala player
+};
+
+
+let lastTime = 0;
+let statueX = 90;
+const keys = {};
+
+window.addEventListener('keydown', e => keys[e.code] = true);
+window.addEventListener('keyup', e => keys[e.code] = false);
+
+function update(dt) {
+    let isMoving = false;
+    let moveDirection = 0;
+
+    if (keys['KeyD'] || keys['ArrowRight']) {
+        moveDirection = 1;
+        isMoving = true;
+        player.facingRight = true;
+    } else if (keys['KeyA'] || keys['ArrowLeft']) {
+        moveDirection = -1;
+        isMoving = true;
+        player.facingRight = false;
+    }
+
+    if (!player.isGrounded) {
+        player.currentAction = 'player_jump';
+        player.maxFrames = 8;
+    } else if (isMoving) {
+        player.currentAction = 'player_run';
+        player.maxFrames = 8;
+    } else {
+        player.currentAction = 'player_idle';
+        player.maxFrames = 8;
+    }
+
+    const currentSpeed = moveDirection * player.speed;
+    layers.forEach(layer => {
+        layer.x -= currentSpeed * layer.speed;
+        if (layer.x <= -canvas.width) layer.x = 0;
+        if (layer.x > 0) layer.x = -canvas.width;
+    });
+
+    statueX -= currentSpeed * 0.8;
+    if (statueX < -canvas.width) statueX = canvas.width + 500;
+    else if (statueX > canvas.width + 500) statueX = -canvas.width;
+
+    if ((keys['Space'] || keys['KeyW']) && player.isGrounded) {
+        player.velocityY = player.jumpForce;
+        player.isGrounded = false;
+    }
+    player.velocityY += player.gravity;
+    player.y += player.velocityY;
+
+    // Batas tanah disesuaikan dengan posisi visual rumput (85% tinggi layar)
+    const groundLimit = canvas.height * 0.70;
+    if (player.y > groundLimit - player.height) {
+        player.y = groundLimit - player.height;
+        player.velocityY = 0;
+        player.isGrounded = true;
+    }
+
+    player.frameTimer += dt;
+    if (player.frameTimer > player.frameInterval) {
+        player.frameX = (player.frameX + 1) % player.maxFrames;
+        player.frameTimer = 0;
+    }
+
+    const targetX = player.facingRight ? player.x + pet.offsetX : player.x + player.width - pet.offsetX - pet.width;
+    pet.x = targetX;
+
+    if (pet.mode === 'fly') {
+        // Mode Terbang: Melayang di atas bahu player
+        pet.floatOffset = Math.sin(Date.now() / 300) * 10;
+        pet.y = player.y + pet.offsetY + pet.floatOffset;
+    } else {
+        // Mode Berlari: Menapak di tanah yang sama dengan player
+        // 0.85 adalah groundLimit yang kita gunakan di map.html sebelumnya
+        const groundLimit = canvas.height * 0.85; 
+        pet.y = groundLimit - pet.height;
+    }
+
+    pet.frameTimer += dt;
+    if (pet.frameTimer > pet.frameInterval) {
+        pet.frameX = (pet.frameX + 1) % pet.maxFrames;
+        pet.frameTimer = 0;
+    }
+
+    
+}
+
+function switchPet(type) {
+    if (type === 'dragon') {
+        assetPaths.pet_active = 'assets/dragons/fly_fire_dragon.png';
+        pet.mode = 'fly';
+        pet.offsetY = -50;
+    } else if (type === 'wolf') {
+        assetPaths.pet_active = 'assets/dragons/unicorn_run.png';
+        pet.mode = 'walk';
+        pet.offsetY = 0; // Menapak tanah
+    }
+    // Muat ulang gambar pet yang aktif
+    const img = new Image();
+    img.src = assetPaths.pet_active;
+    img.onload = () => { images['pet_active'] = img; };
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    layers.forEach(layer => {
+        const img = images[layer.img];
+        if (img && img.complete) {
+            // Kita gunakan canvas.height untuk semua agar tidak penyet secara vertikal
+            ctx.drawImage(img, layer.x, 0, canvas.width, canvas.height);
+            if (layer.speed > 0) {
+                ctx.drawImage(img, layer.x + canvas.width, 0, canvas.width, canvas.height);
+            }
+        }
+
+        // Patung Raksasa Proporsional
+        if (layer.img === 'ruins' && images['statue']?.complete) {
+            const sHeight = canvas.height * 1.1; 
+            const sWidth = sHeight * 1.7; 
+            const yPos = canvas.height - (sHeight * 0.93); // Menapak di area rumput
+
+            ctx.drawImage(images['statue'], statueX, yPos, sWidth, sHeight);
+        }
+        
+        if (img && img.complete) {
+            ctx.drawImage(img, layer.x, 0, canvas.width, canvas.height);
+            if (layer.speed > 0) {
+                ctx.drawImage(img, layer.x + canvas.width, 0, canvas.width, canvas.height);
+            }
+        }
+    });
+
+    const sprite = images[player.currentAction];
+    if (sprite && sprite.complete) {
+        ctx.save();
+        if (!player.facingRight) {
+            ctx.scale(-1, 1);
+            ctx.drawImage(sprite, 
+                player.frameX * player.width, 0, player.width, player.height,
+                -(player.x + player.width), player.y, player.width, player.height
+            );
+        } else {
+            ctx.drawImage(sprite, 
+                player.frameX * player.width, 0, player.width, player.height,
+                player.x, player.y, player.width, player.height
+            );
+        }
+        ctx.restore();
+    }
+
+    const petSprite = images['fire_dragon_fly']; // Default ke unicorn, bisa diubah dengan switchPet
+    if (petSprite && petSprite.complete) {
+        ctx.save();
+        // Membalik arah naga sesuai arah player
+        if (!player.facingRight) {
+            ctx.scale(-1, 1);
+            ctx.drawImage(petSprite,
+                pet.frameX * pet.width, 0, pet.width, pet.height,
+                -(pet.x + pet.width), pet.y, pet.width, pet.height
+            );
+        } else {
+            ctx.drawImage(petSprite,
+                pet.frameX * pet.width, 0, pet.width, pet.height,
+                pet.x, pet.y, pet.width, pet.height
+            );
+        }
+        ctx.restore();
+    }
+}
+
+function gameLoop(timeStamp = 0) {
+    const deltaTime = timeStamp - lastTime;
+    lastTime = timeStamp;
+    update(isNaN(deltaTime) ? 0 : deltaTime);
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+loadAssets();
+</script>
+
+</body>
+</html>
