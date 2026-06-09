@@ -1,0 +1,26 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #1a1a1a; /* Warna gelap di luar area game */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Press Start 2P', monospace; /* Font Pixel Art */
+}
+
+#game-container {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    border: 4px solid #333;
+}
+
+canvas {
+    background-color: #000; /* Warna dasar canvas sebelum gambar di-load */
+    display: block;
+    image-rendering: pixelated; /* Menjaga aset pixel art tetap tajam, tidak blur */
+}
