@@ -7,13 +7,6 @@ import lombok.Data;
 @Table(name = "DRAGON")
 @Data
 public class Dragon {
-    @ManyToOne
-    @JoinColumn(name = "hero_id")
-    private Hero owner;
-
-    public Hero getOwner() {return owner;  }
-    public void setOwner(Hero owner) {this.owner = owner; }
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -32,7 +25,7 @@ public class Dragon {
 
     @Enumerated(EnumType.STRING)
     private ElementType element;
-
+    
     // Method umum untuk semua naga
     public void takeDamage(int amount) {
         int damageAfterDefense = Math.max(0, amount - this.defense);

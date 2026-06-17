@@ -16,8 +16,11 @@ public class Hero {
     private int posX;
     private int posY;
 
-    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    private List<Dragon> dragons = new ArrayList<>();
+    private int health = 100;
+    private int maxHealth = 100;
+    private int attack = 25;
+    private int defense = 15;
+
 
     public Hero() {}
 
@@ -27,6 +30,10 @@ public class Hero {
         this.level = 1;
         this.posX = 0;
         this.posY = 0;   
+        this.health = 100;
+        this.maxHealth = 100;
+        this.attack = 25;
+        this.defense = 15;
     }
 
     // Getter & Setter untuk ID
@@ -51,11 +58,4 @@ public class Hero {
     public int getPosY() { return posY; }
     public void setPosY(int posY) { this.posY = posY; }
 
-    public List<Dragon> getDragons() { return dragons; }
-    public void setDragons(List<Dragon> dragons) { this.dragons = dragons; } // Tambahkan ini
-
-    public void addDragon(Dragon dragon) {
-        dragons.add(dragon);
-        dragon.setOwner(this);
-    }
 }
