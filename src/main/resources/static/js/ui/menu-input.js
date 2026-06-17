@@ -69,17 +69,49 @@ function drawInputNameScreen(ctx, canvasWidth, canvasHeight) {
 }
 
 // ====== 3. FUNGSIONALITAS SAVE DATA ======
-function saveCharacterName() {
-    if (playerCharacter.name.trim() !== "") {
-        // Simpan objek playerCharacter ke LocalStorage berdasarkan slot yang aktif saat ini
-        localStorage.setItem(
-            `dragon_monster_slot_${currentSaveSlot}`, 
-            JSON.stringify(playerCharacter)
-        );
-        console.log(`Data nama berhasil disimpan di Slot ${currentSaveSlot}!`);
+function submitCharacterName() {
+    // Ambil nama yang sudah diinput oleh user dan bersihkan spasi di ujungnya
+    const finalName = playerCharacter.name ? playerCharacter.name.trim() : "";
+
+    if (finalName !== "") {
+        // 1. Simpan ke LocalStorage sebagai backup cadangan di browser
+        localStorage.setItem(`dragon_monster_slot_${currentSaveSlot}`, JSON.stringify(playerCharacter));
         
-        // Pindah ke layar berikutnya (Pilih Naga)
-        gameState = "SELECT_DRAGON";
+        // 2. Siapkan data Payload untuk dikirim ke Tabel SAVE_SLOT Database H2 Spring Boot
+        const newSaveData = {
+            id: currentSaveSlot,             // Mengunci ID sesuai slot aktif yang dipilih (1, 2, atau 3)
+            saveName: finalName,             // Mengisi kolom SAVE_NAME di database H2
+            playerLevel: 1,                  // Level dasar karakter baru
+            selectedCharacterName: "None"    // 🔥 PERBAIKAN: Menggunakan preferensi Karakter/Hero, bukan naga
+        };
+
+        // 3. Tembak & Daftarkan data ke Backend Spring Boot
+        fetch("/api/slots", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(newSaveData)
+        })
+        .then(res => {
+            if (!res.ok) throw new Error("Gagal menyimpan data karakter ke database");
+            return res.json();
+        })
+        .then(data => {
+            console.log("Karakter sukses didaftarkan di tabel SAVE_SLOT H2:", data);
+            
+            // 4. Sinkronisasikan data internal agar menu slot ikut ter-refresh dengan nama baru
+            if (typeof loadAllSlotsFromDatabase === "function") {
+                loadAllSlotsFromDatabase();
+            }
+            
+            // 5. 🔥 PERBAIKAN WORKFLOW: Alihkan gameState langsung ke menu pemilihan KARAKTER
+            gameState = "SELECT_CHARACTER"; 
+            console.log(`[WORKFLOW] Karakter ${finalName} tersimpan. Berpindah ke layar SELECT_CHARACTER.`);
+        })
+        .catch(err => {
+            console.error("Error sinkronisasi H2:", err);
+            alert("Gagal terhubung ke database server Spring Boot! Data belum tersimpan.");
+        });
+
     } else {
         alert("Nama tidak boleh kosong!");
     }
@@ -93,12 +125,7 @@ window.addEventListener("keydown", (event) => {
         playerCharacter.name = playerCharacter.name.slice(0, -1);
     } 
     else if (event.key === "Enter") {
-        if (typedName.trim()!== "") {
-            playerCharacter.name = typedName.trim();
-            saveNewSlotToDatabase(currentSaveSlot, playerCharacter.name); // Simpan ke database H2
-        }else {
-            alert("Nama tidak boleh kosong!");
-        } // Panggil fungsi simpan saat menekan Enter
+        submitCharacterName(); 
     }
     else if (event.key.length === 1 && playerCharacter.name.length < inputScreen.maxChars) {
         if (/[a-zA-Z0-9 ]/.test(event.key)) {
