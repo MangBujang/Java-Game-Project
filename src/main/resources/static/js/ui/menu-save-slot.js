@@ -34,7 +34,6 @@ function loadAllSlotsFromDatabase() {
 // Jalankan fetch awal saat pertama kali script dimuat
 loadAllSlotsFromDatabase();
 
-// 🔥 FUNGSI SINKRONISASI: Dipanggil saat user selesai mengetik nama di New Game
 function saveNewSlotToDatabase(slotId, heroName) {
     const payload = {
         id: slotId,
@@ -43,8 +42,8 @@ function saveNewSlotToDatabase(slotId, heroName) {
     };
 
     // Menggunakan PUT/POST sesuai endpoint Controller Spring Boot kamu
-    return fetch(`/api/slots/${slotId}`, {
-        method: "PUT", 
+    return fetch(`/api/slots`, {
+        method: "POST", 
         headers: {
             "Content-Type": "application/json"
         },
@@ -139,6 +138,7 @@ function drawSaveSlotsScreen(ctx, canvasWidth, canvasHeight) {
 }
 
 // ====== 4. INTERAKSI KLIK MOUSE PADA MENU SAVE SLOT ======
+
 document.getElementById("gameCanvas").addEventListener("click", (event) => {
     if (gameState !== "SAVE_SLOT_MENU") return;
 
@@ -197,16 +197,22 @@ document.getElementById("gameCanvas").addEventListener("click", (event) => {
             }
 
             if (hasValidName) {
+                // LOAD DATA: Jika slot berisi, muat data dan langsung jalankan game atau ke pilihan class jika belum ada
                 playerCharacter = {
                     name: loadedName,
                     level: slotData.playerLevel || slotData.level || 1,
-                    selectedDragon: null
+                    selectedCharacterName: slotData.selectedCharacterName || "None"
                 };
-                gameState = "PLAYING"; 
+                
+                if (playerCharacter.selectedCharacterName === "None") {
+                    gameState = "SELECT_CHARACTER";
+                } else {
+                    gameState = "PLAYING"; 
+                }
             } else {
+                // NEW DATA: Jika slot kosong, bersihkan nama global dan arahkan ke layar input nama
                 playerCharacter.name = "";
-                playerCharacter.selectedDragon = null;
-                if (typeof typedName !== "undefined") typedName = ""; 
+                playerCharacter.selectedCharacterName = "None";
                 gameState = "INPUT_NAME";
             }
             return;

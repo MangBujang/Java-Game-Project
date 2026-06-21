@@ -1,6 +1,9 @@
 package com.dragonworld.game.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "SAVE_SLOT")
@@ -11,18 +14,20 @@ public class SaveSlot {
     @Column(name = "save_name", nullable = false)
     private String saveName; // Isi database berupa nama dari save state (misal: "MAMAT", "PROGRES_AWAL")
 
-    // Kolom tambahan opsional untuk menyimpan status gameplay
     private int playerLevel;
-    private String selectedDragonName;
+
+    // 🔥 TAMBAHAN: Kolom untuk menyimpan class hero (WIZARD, KNIGHT, ARCHER)
+    @Column(name = "selected_character_name")
+    private String selectedCharacterName;
 
     // ====== CONSTRUCTOR ======
     public SaveSlot() {}
 
-    public SaveSlot(Long id, String saveName, int playerLevel, String selectedDragonName) {
+    public SaveSlot(Long id, String saveName, int playerLevel, String selectedCharacterName) {
         this.id = id;
         this.saveName = saveName;
         this.playerLevel = playerLevel;
-        this.selectedDragonName = selectedDragonName;
+        this.selectedCharacterName = selectedCharacterName;
     }
 
     // ====== GETTER & SETTER ======
@@ -35,6 +40,7 @@ public class SaveSlot {
     public int getPlayerLevel() { return playerLevel; }
     public void setPlayerLevel(int playerLevel) { this.playerLevel = playerLevel; }
 
-    public String getSelectedDragonName() { return selectedDragonName; }
-    public void setSelectedDragonName(String selectedDragonName) { this.selectedDragonName = selectedDragonName; }
+    // 🔥 TAMBAHAN: Getter & Setter untuk Class Hero
+    public String getSelectedCharacterName() { return selectedCharacterName; }
+    public void setSelectedCharacterName(String selectedCharacterName) { this.selectedCharacterName = selectedCharacterName; }
 }

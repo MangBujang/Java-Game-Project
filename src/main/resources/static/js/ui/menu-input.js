@@ -160,6 +160,6 @@ canvas.addEventListener("click", (event) => {
     if (mouseX >= inputScreen.btnX && mouseX <= inputScreen.btnX + inputScreen.btnWidth &&
         mouseY >= inputScreen.btnY && mouseY <= inputScreen.btnY + inputScreen.btnHeight) {
         
-        saveCharacterName(); // Panggil fungsi simpan saat tombol diklik
+        submitCharacterName(); 
     }
 });

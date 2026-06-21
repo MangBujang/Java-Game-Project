@@ -88,19 +88,16 @@ function isMouseOverButton(mouseX, mouseY, btnX, btnY, btnWidth, btnHeight) {
 }
 
 // Fungsi Pusat Eksekusi Perubahan State Layar
+// ... (Kode konfigurasi panel tetap sama)
+
 function jalankanAksiMenu() {
     const tombolTerpilih = menuPanel.buttons[menuSelectedIndex].text;
     console.log(`[WORKFLOW] Mengaktifkan Menu: ${tombolTerpilih}`);
 
-    if (tombolTerpilih === "NEW GAME") {
-        // Alur New Game: Kosongkan nama, langsung lempar ke form pengetikan nama
-        playerCharacter.name = "";
-        playerCharacter.selectedDragon = null;
-        if (typeof typedName !== "undefined") typedName = ""; 
-        gameState = "INPUT_NAME"; 
-    } 
-    else if (tombolTerpilih === "LOAD GAME") {
-        // Alur Load Game: Alihkan ke menu yang menampilkan 3 slot database H2 kamu
+    if (tombolTerpilih === "NEW GAME" || tombolTerpilih === "LOAD GAME") {
+        if (typeof loadAllSlotsFromDatabase === "function") {
+            loadAllSlotsFromDatabase();
+        }
         gameState = "SAVE_SLOT_MENU"; 
     } 
     else if (tombolTerpilih === "EXIT") {
@@ -111,7 +108,6 @@ function jalankanAksiMenu() {
 // A. Deteksi Hover Gerakan Mouse
 menuCanvas.addEventListener("mousemove", (event) => {
     if (gameState !== "MAIN_MENU") return;
-
     const rect = menuCanvas.getBoundingClientRect();
     const mouseX = event.clientX - rect.left;
     const mouseY = event.clientY - rect.top;
@@ -122,45 +118,38 @@ menuCanvas.addEventListener("mousemove", (event) => {
 
         if (isMouseOverButton(mouseX, mouseY, btnX, btnY, menuPanel.buttonWidth, menuPanel.buttonHeight)) {
             button.isHovered = true;
-            menuSelectedIndex = index; // Samakan index keyboard dengan posisi kursor mouse
+            menuSelectedIndex = index;
         } else {
             button.isHovered = false;
         }
     });
 });
 
-// B. Deteksi Klik Mouse
-menuCanvas.addEventListener("click", (event) => {
-    if (gameState !== "MAIN_MENU") return;
+// // B. Deteksi Klik Mouse
+// menuCanvas.addEventListener("click", (event) => {
+//     if (gameState !== "MAIN_MENU") return;
+//     const rect = menuCanvas.getBoundingClientRect();
+//     const mouseX = event.clientX - rect.left;
+//     const mouseY = event.clientY - rect.top;
 
-    const rect = menuCanvas.getBoundingClientRect();
-    const mouseX = event.clientX - rect.left;
-    const mouseY = event.clientY - rect.top;
+//     menuPanel.buttons.forEach(button => {
+//         const btnX = menuPanel.x + (menuPanel.width - menuPanel.buttonWidth) / 2;
+//         const btnY = menuPanel.y + button.yOffset;
 
-    menuPanel.buttons.forEach(button => {
-        const btnX = menuPanel.x + (menuPanel.width - menuPanel.buttonWidth) / 2;
-        const btnY = menuPanel.y + button.yOffset;
-
-        if (isMouseOverButton(mouseX, mouseY, btnX, btnY, menuPanel.buttonWidth, menuPanel.buttonHeight)) {
-            if (button.text === "NEW GAME") {
-                // Alur baru: New game langsung minta input nama, slot otomatis diatur nanti
-                playerCharacter.name = "";
-                playerCharacter.selectedDragon = null;
-                if (typeof typedName !== "undefined") typedName = ""; 
-                gameState = "INPUT_NAME"; 
-                console.log("[WORKFLOW] Pergi ke penulisan nama baru.");
-            } 
-            else if (button.text === "LOAD GAME") {
-                // Alur baru: Load Game membuka panel 3 slot H2
-                gameState = "SAVE_SLOT_MENU"; 
-                console.log("[WORKFLOW] Membuka daftar slot save game.");
-            } 
-            else if (button.text === "EXIT") {
-                alert("Game Keluar");
-            }
-        }
-    });
-});
+//         if (isMouseOverButton(mouseX, mouseY, btnX, btnY, menuPanel.buttonWidth, menuPanel.buttonHeight)) {
+//             if (button.text === "NEW GAME" || button.text === "LOAD GAME") {
+//                 if (typeof loadAllSlotsFromDatabase === "function") {
+//                     loadAllSlotsFromDatabase();
+//                 }
+//                 gameState = "SAVE_SLOT_MENU"; 
+//                 console.log(`[WORKFLOW] Membuka daftar slot save game untuk: ${button.text}`);
+//             } 
+//             else if (button.text === "EXIT") {
+//                 alert("Game Keluar");
+//             }
+//         }
+//     });
+// });
 
 // C. Deteksi Tekanan Tombol Keyboard
 window.addEventListener("keydown", (event) => {
@@ -173,19 +162,6 @@ window.addEventListener("keydown", (event) => {
         menuSelectedIndex = (menuSelectedIndex - 1 + menuPanel.buttons.length) % menuPanel.buttons.length;
     } 
     else if (event.key === "Enter") {
-        const tombolAktif = menuPanel.buttons[menuSelectedIndex].text;
-        
-        if (tombolAktif === "NEW GAME") {
-            playerCharacter.name = "";
-            playerCharacter.selectedDragon = null;
-            if (typeof typedName !== "undefined") typedName = ""; 
-            gameState = "INPUT_NAME";
-        } 
-        else if (tombolAktif === "LOAD GAME") {
-            gameState = "SAVE_SLOT_MENU";
-        } 
-        else if (tombolAktif === "EXIT") {
-            alert("Game Keluar");
-        }
+        jalankanAksiMenu();
     }
 });

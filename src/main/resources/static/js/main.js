@@ -130,3 +130,4 @@ function drawGameplayHUD(ctx) {
 window.onload = () => {
     gameLoop();
 };
+
