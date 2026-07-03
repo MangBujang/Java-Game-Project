@@ -94,7 +94,7 @@ function gameLoop() {
             }
             break;
 
-        case "SELECT_CHARACTER": // 🔥 Menggantikan SELECT_DRAGON
+        case "SELECT_CHARACTER": 
             if (typeof drawCharacterSelectionScreen === "function") {
                 drawCharacterSelectionScreen(ctx, canvas.width, canvas.height);
             }
@@ -102,8 +102,12 @@ function gameLoop() {
 
         case "PLAYING":
             updatePlayerLogic();
-            ctx.fillStyle = "#1e222b";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            if (typeof drawGameMap === "function") {
+                drawGameMap(ctx);
+            }
+
+            // ctx.fillStyle = "#f0f0f0";
+            // ctx.fillRect(0, 0, canvas.width, canvas.height);
             drawPlayer(ctx);
             drawGameplayHUD(ctx);
             break;

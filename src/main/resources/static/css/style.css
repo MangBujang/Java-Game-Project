@@ -24,3 +24,10 @@ canvas {
     display: block;
     image-rendering: pixelated; /* Menjaga aset pixel art tetap tajam, tidak blur */
 }
+
+#gameCanvas {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    height: auto;
+}

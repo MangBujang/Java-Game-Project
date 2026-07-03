@@ -1,7 +1,3 @@
-/**
- * Game Engine untuk Vyrn World
- * Lokasi File: src/main/resources/static/js/game.js
- */
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
