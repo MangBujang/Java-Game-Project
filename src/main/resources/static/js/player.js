@@ -1,92 +1,212 @@
-// ====== 1. KONFIGURASI KARAKTER UTAMA (HERO) ======
-const hero = {
-    // Posisi awal di tengah-tengah map
-    x: 400,
-    y: 225,
-    
-    // Ukuran kotak karakter (bisa disesuaikan dengan ukuran sprite-mu nanti)
-    width: 32,
-    height: 48,
-    
-    // Kecepatan berjalan (piksel per frame)
-    speed: 4,
-    
-    // Status arah menghadap (untuk keperluan animasi sprite)
-    // "DOWN", "UP", "LEFT", "RIGHT"
-    direction: "DOWN",
-    isMoving: false
+// ======  REGISTRI ASET SEMUA KARAKTER ======
+const characterAssets = {
+    WIZARD: {
+        idle: new Image(),
+        run: new Image(),
+        jump: new Image(),
+        folder: "Wanderer Magican"
+    },
+    KNIGHT: {
+        idle: new Image(),
+        run: new Image(),
+        jump: new Image(),
+        folder: "Knight"
+    },
+    ARCHER: {
+        idle: new Image(),
+        run: new Image(),
+        jump: new Image(),
+        folder: "Archer"
+    }
 };
 
-// ====== 2. TRACKING INPUT KEYBOARD ======
-// Objek untuk mencatat tombol apa saja yang sedang ditekan oleh pemain
+// ====== LOAD SPRITE ======
+const imgHeroIdle = new Image();
+imgHeroIdle.src = "/assets/player/Wanderer Magican/Idle.png";
+
+const imgHeroRun = new Image();
+imgHeroRun.src = "/assets/player/Wanderer Magican/Run.png";
+
+const imgHeroJump = new Image();
+imgHeroJump.src = "/assets/player/Wanderer Magican/Jump.png";
+
+// ====== HERO CONFIG ======
+const hero = {
+    x: 100,
+    y: 220,
+
+    width: 300,
+    height: 300,
+
+    spriteWidth: 128,
+    spriteHeight: 128,
+
+    frameX: 0,
+    maxFrames: 8,
+    frameTimer: 0,
+    frameInterval: 8,
+
+    speed: 8,
+    velocityY: 0,
+    gravity: 0.5,
+    jumpPower: -15,
+    isGrounded: false,
+
+    direction: "RIGHT",
+    isMoving: false,
+
+    animation: "IDLE",
+    prevAnimation: "IDLE",
+
+    jumpFrames: 4 // jumlah frame jump
+};
+
+// ====== INPUT ======
 const keysPressed = {};
 
 window.addEventListener("keydown", (event) => {
-    // Catat tombol menjadi true jika ditekan
     keysPressed[event.key.toLowerCase()] = true;
 });
 
 window.addEventListener("keyup", (event) => {
-    // Hapus/set menjadi false jika tombol dilepas
     keysPressed[event.key.toLowerCase()] = false;
 });
 
-// ====== 3. LOGIKA UPDATE PERGERAKAN (DIUPDATE TIAP FRAME) ======
+// ====== UPDATE LOGIC ======
 function updatePlayerLogic() {
     if (gameState !== "PLAYING") return;
 
     hero.isMoving = false;
 
-    // Gerak ke Atas (Tombol W atau ArrowUp)
-    if (keysPressed["w"] || keysPressed["arrowup"]) {
-        hero.y -= hero.speed;
-        hero.direction = "UP";
-        hero.isMoving = true;
-    }
-    // Gerak ke Bawah (Tombol S or ArrowDown)
-    else if (keysPressed["s"] || keysPressed["arrowdown"]) {
-        hero.y += hero.speed;
-        hero.direction = "DOWN";
-        hero.isMoving = true;
-    }
-
-    // Gerak ke Kiri (Tombol A atau ArrowLeft)
+    // Gerak kiri
     if (keysPressed["a"] || keysPressed["arrowleft"]) {
         hero.x -= hero.speed;
         hero.direction = "LEFT";
         hero.isMoving = true;
     }
-    // Gerak ke Kanan (Tombol D atau ArrowRight)
+    // Gerak kanan
     else if (keysPressed["d"] || keysPressed["arrowright"]) {
         hero.x += hero.speed;
         hero.direction = "RIGHT";
         hero.isMoving = true;
     }
 
-    // --- PENGAMAN: Batasi agar karakter tidak berjalan keluar dari batas layar Canvas ---
+    // Lompat
+    if ((keysPressed["w"] || keysPressed[" "] || keysPressed["arrowup"]) && hero.isGrounded) {
+        hero.velocityY = hero.jumpPower;
+        hero.isGrounded = false;
+    }
+
+    // Gravitasi
+    hero.velocityY += hero.gravity;
+    hero.y += hero.velocityY;
+
+    const groundLevel = 230;
+
+    if (hero.y >= groundLevel) {
+        hero.y = groundLevel;
+        hero.velocityY = 0;
+        hero.isGrounded = true;
+    }
+
+    // Batas canvas
     if (hero.x < 0) hero.x = 0;
-    if (hero.x > 800 - hero.width) hero.x = 800 - hero.width;
-    if (hero.y < 0) hero.y = 0;
-    if (hero.y > 450 - hero.height) hero.y = 450 - hero.height;
+    if (hero.x > canvas.width - hero.width) {
+        hero.x = canvas.width - hero.width;
+    }
+
+    // ====== SET ANIMASI ======
+    if (!hero.isGrounded) {
+        hero.animation = "JUMP";
+    } else if (hero.isMoving) {
+        hero.animation = "RUN";
+    } else {
+        hero.animation = "IDLE";
+    }
+
+    // RESET FRAME kalau animasi berubah
+    if (hero.animation !== hero.prevAnimation) {
+        hero.frameX = 0;
+        hero.frameTimer = 0;
+        hero.prevAnimation = hero.animation;
+    }
+
+    // SET SPEED + FRAME
+    if (hero.animation === "RUN") {
+        hero.frameInterval = 4;
+        hero.maxFrames = 8;
+    } 
+    else if (hero.animation === "JUMP") {
+        hero.frameInterval = 6;
+        hero.maxFrames = hero.jumpFrames;
+    } 
+    else {
+        hero.frameInterval = 10;
+        hero.maxFrames = 8;
+    }
 }
 
-// ====== 4. FUNGSI GAMBAR KARAKTER ======
+// ====== DRAW PLAYER ======
 function drawPlayer(ctx) {
     if (gameState !== "PLAYING") return;
 
-    // Sementara kita gunakan kotak solid dulu untuk representasi karakter utama.
-    // Nanti kotak ini tinggal kita ganti menggunakan fungsi ctx.drawImage() jika aset sprite gambarmu sudah siap.
-    ctx.fillStyle = "#3498db"; // Warna biru keren untuk Hero
-    ctx.fillRect(hero.x, hero.y, hero.width, hero.height);
+    let currentImage;
 
-    // Gambar indikator mata/arah kecil biar kita tahu Hero-mu sedang menghadap mana
-    ctx.fillStyle = "#ffffff";
-    let eyeX = hero.x + 12;
-    let eyeY = hero.y + 10;
+    if (hero.animation === "RUN") {
+        currentImage = imgHeroRun;
+    } else if (hero.animation === "JUMP") {
+        currentImage = imgHeroJump;
+    } else {
+        currentImage = imgHeroIdle;
+    }
 
-    if (hero.direction === "LEFT") eyeX = hero.x + 4;
-    if (hero.direction === "RIGHT") eyeX = hero.x + 20;
-    if (hero.direction === "UP") eyeY = hero.y + 4;
+    if (currentImage.complete && currentImage.naturalWidth !== 0) {
+        let sx = hero.frameX * hero.spriteWidth;
+        let sy = 0;
 
-    ctx.fillRect(eyeX, eyeY, 8, 8);
+        const centerX = hero.x + hero.width / 2;
+        const centerY = hero.y + hero.height / 2;
+
+        if (hero.direction === "LEFT") {
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.scale(-1, 1);
+
+            ctx.drawImage(
+                currentImage,
+                sx, sy,
+                hero.spriteWidth, hero.spriteHeight,
+                -hero.width / 2, -hero.height / 2,
+                hero.width, hero.height
+            );
+
+            ctx.restore();
+        } else {
+            ctx.drawImage(
+                currentImage,
+                sx, sy,
+                hero.spriteWidth, hero.spriteHeight,
+                hero.x, hero.y,
+                hero.width, hero.height
+            );
+        }
+
+        // ====== ANIMASI FRAME ======
+        if (hero.animation === "JUMP") {
+            // biar ga looping terus (lebih realistis)
+            if (hero.frameX < hero.maxFrames - 1) {
+                hero.frameTimer++;
+                if (hero.frameTimer > hero.frameInterval) {
+                    hero.frameX++;
+                    hero.frameTimer = 0;
+                }
+            }
+        } else {
+            hero.frameTimer++;
+            if (hero.frameTimer > hero.frameInterval) {
+                hero.frameX = (hero.frameX + 1) % hero.maxFrames;
+                hero.frameTimer = 0;
+            }
+        }
+    }
 }
