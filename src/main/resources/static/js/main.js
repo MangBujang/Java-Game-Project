@@ -28,40 +28,6 @@ const slotScreen = {
     slotHeight: 80
 };
 
-// ====== 4. FUNGSI CADANGAN UNTUK MENGGAMBAR SLOT ======
-function drawSaveSlotScreen(ctx, canvasWidth, canvasHeight) {
-    slotScreen.x = (canvasWidth - slotScreen.width) / 2;
-    slotScreen.y = (canvasHeight - slotScreen.height) / 2;
-
-    ctx.fillStyle = slotScreen.backgroundColor;
-    ctx.fillRect(slotScreen.x, slotScreen.y, slotScreen.width, slotScreen.height);
-    ctx.strokeStyle = slotScreen.borderColor;
-    ctx.lineWidth = slotScreen.borderWidth;
-    ctx.strokeRect(slotScreen.x, slotScreen.y, slotScreen.width, slotScreen.height);
-
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "12px 'Press Start 2P'";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "top";
-    ctx.fillText("Select save slot", canvasWidth / 2, slotScreen.y + 25);
-
-    slotScreen.slots.forEach(slot => {
-        const sX = slotScreen.x + (slotScreen.width - slotScreen.slotWidth) / 2;
-        const sY = slotScreen.y + slot.yOffset;
-
-        ctx.fillStyle = "#1e222b";
-        ctx.fillRect(sX, sY, slotScreen.slotWidth, slotScreen.slotHeight);
-        ctx.strokeStyle = "#4b5563";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(sX, sY, slotScreen.slotWidth, slotScreen.slotHeight);
-
-        ctx.fillStyle = "#a1a1aa";
-        ctx.font = "14px 'Press Start 2P'";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("Empty Slot", sX + (slotScreen.slotWidth / 2), sY + (slotScreen.slotHeight / 2));
-    });
-}
 
 // ====== Placeholder fungsi gameplay agar aman ======
 function updatePlayerLogic() {}
@@ -79,12 +45,11 @@ function gameLoop() {
             }
             break;
         
-        case "SELECT_SLOT":
         case "SAVE_SLOT_MENU":
             if (typeof drawSaveSlotsScreen === "function") {
                 drawSaveSlotsScreen(ctx, canvas.width, canvas.height);
             } else {
-                drawSaveSlotScreen(ctx, canvas.width, canvas.height);
+                console.warn("drawSaveSlotsScreen function is not defined.");
             }
             break;
             
@@ -94,16 +59,40 @@ function gameLoop() {
             }
             break;
 
-        case "SELECT_CHARACTER": // 🔥 Menggantikan SELECT_DRAGON
+        case "SELECT_CHARACTER": 
             if (typeof drawCharacterSelectionScreen === "function") {
                 drawCharacterSelectionScreen(ctx, canvas.width, canvas.height);
             }
             break;
 
         case "PLAYING":
+            // Inisialisasi Karakter Secara Dinamis berdasarkan pilihan user saat masuk game
+            if (!isAssetsLoadedFlag) {
+                // Ambil data nama kelas, jika null/kosong arahkan ke default WIZARD
+                let choosenClass = "WIZARD";
+                if (playerCharacter && playerCharacter.selectedCharacterName) {
+                    choosenClass = playerCharacter.selectedCharacterName.toUpperCase().trim();
+                }
+                
+                console.log("[DEBUG MAIN] Mencoba membuat objek untuk kelas:", choosenClass);
+
+                if (choosenClass === "KNIGHT") {
+                    hero = new KnightPlayer();
+                } else if (choosenClass === "ARCHER") {
+                    hero = new ArcherPlayer();
+                } else {
+                    hero = new WizardPlayer(); 
+                }
+                
+                isAssetsLoadedFlag = true; 
+                console.log(`[SPAWN SUCCESS] Objek Player berhasil dibuat:`, hero);
+            }
+
             updatePlayerLogic();
-            ctx.fillStyle = "#1e222b";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            if (typeof drawGameMap === "function") {
+                drawGameMap(ctx);
+            }
+
             drawPlayer(ctx);
             drawGameplayHUD(ctx);
             break;
@@ -130,4 +119,9 @@ function drawGameplayHUD(ctx) {
 window.onload = () => {
     gameLoop();
 };
+
+window.addEventListener("keyup", (event) => {
+    // Menghapus tombol dari memory saat diangkat dari keyboard
+    delete keysPressed[event.key.toLowerCase()];
+});
 

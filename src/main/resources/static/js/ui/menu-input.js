@@ -139,8 +139,8 @@ canvas.addEventListener("mousemove", (event) => {
     if (gameState !== "INPUT_NAME") return;
 
     const rect = canvas.getBoundingClientRect();
-    const mouseX = event.clientX - rect.left;
-    const mouseY = event.clientY - rect.top;
+    const mouseX = ((event.clientX - rect.left) / rect.width) * canvas.width;
+    const mouseY = ((event.clientY - rect.top) / rect.height) * canvas.height;
 
     if (mouseX >= inputScreen.btnX && mouseX <= inputScreen.btnX + inputScreen.btnWidth &&
         mouseY >= inputScreen.btnY && mouseY <= inputScreen.btnY + inputScreen.btnHeight) {
@@ -154,8 +154,8 @@ canvas.addEventListener("click", (event) => {
     if (gameState !== "INPUT_NAME") return;
 
     const rect = canvas.getBoundingClientRect();
-    const mouseX = event.clientX - rect.left;
-    const mouseY = event.clientY - rect.top;
+    const mouseX = ((event.clientX - rect.left) / rect.width) * canvas.width;
+    const mouseY = ((event.clientY - rect.top) / rect.height) * canvas.height;
 
     if (mouseX >= inputScreen.btnX && mouseX <= inputScreen.btnX + inputScreen.btnWidth &&
         mouseY >= inputScreen.btnY && mouseY <= inputScreen.btnY + inputScreen.btnHeight) {

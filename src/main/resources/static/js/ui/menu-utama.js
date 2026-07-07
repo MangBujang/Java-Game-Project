@@ -109,8 +109,8 @@ function jalankanAksiMenu() {
 menuCanvas.addEventListener("mousemove", (event) => {
     if (gameState !== "MAIN_MENU") return;
     const rect = menuCanvas.getBoundingClientRect();
-    const mouseX = event.clientX - rect.left;
-    const mouseY = event.clientY - rect.top;
+    const mouseX = ((event.clientX - rect.left) / rect.width) * canvas.width;
+    const mouseY = ((event.clientY - rect.top) / rect.height) * canvas.height;
 
     menuPanel.buttons.forEach((button, index) => {
         const btnX = menuPanel.x + (menuPanel.width - menuPanel.buttonWidth) / 2;
@@ -129,8 +129,8 @@ menuCanvas.addEventListener("mousemove", (event) => {
 // menuCanvas.addEventListener("click", (event) => {
 //     if (gameState !== "MAIN_MENU") return;
 //     const rect = menuCanvas.getBoundingClientRect();
-//     const mouseX = event.clientX - rect.left;
-//     const mouseY = event.clientY - rect.top;
+//     const mouseX = ((event.clientX - rect.left) / rect.width) * canvas.width;
+//     const mouseY = ((event.clientY - rect.top) / rect.height) * canvas.height;
 
 //     menuPanel.buttons.forEach(button => {
 //         const btnX = menuPanel.x + (menuPanel.width - menuPanel.buttonWidth) / 2;
