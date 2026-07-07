@@ -66,6 +66,28 @@ function gameLoop() {
             break;
 
         case "PLAYING":
+            // Inisialisasi Karakter Secara Dinamis berdasarkan pilihan user saat masuk game
+            if (!isAssetsLoadedFlag) {
+                // Ambil data nama kelas, jika null/kosong arahkan ke default WIZARD
+                let choosenClass = "WIZARD";
+                if (playerCharacter && playerCharacter.selectedCharacterName) {
+                    choosenClass = playerCharacter.selectedCharacterName.toUpperCase().trim();
+                }
+                
+                console.log("[DEBUG MAIN] Mencoba membuat objek untuk kelas:", choosenClass);
+
+                if (choosenClass === "KNIGHT") {
+                    hero = new KnightPlayer();
+                } else if (choosenClass === "ARCHER") {
+                    hero = new ArcherPlayer();
+                } else {
+                    hero = new WizardPlayer(); 
+                }
+                
+                isAssetsLoadedFlag = true; 
+                console.log(`[SPAWN SUCCESS] Objek Player berhasil dibuat:`, hero);
+            }
+
             updatePlayerLogic();
             if (typeof drawGameMap === "function") {
                 drawGameMap(ctx);
@@ -97,4 +119,9 @@ function drawGameplayHUD(ctx) {
 window.onload = () => {
     gameLoop();
 };
+
+window.addEventListener("keyup", (event) => {
+    // Menghapus tombol dari memory saat diangkat dari keyboard
+    delete keysPressed[event.key.toLowerCase()];
+});
 

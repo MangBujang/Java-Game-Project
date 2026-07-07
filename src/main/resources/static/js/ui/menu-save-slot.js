@@ -207,6 +207,7 @@ document.getElementById("gameCanvas").addEventListener("click", (event) => {
                 if (playerCharacter.selectedCharacterName === "None") {
                     gameState = "SELECT_CHARACTER";
                 } else {
+                    isAssetsLoaded = false;
                     gameState = "PLAYING"; 
                 }
             } else {

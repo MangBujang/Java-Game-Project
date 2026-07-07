@@ -144,6 +144,7 @@ function updateCharacterToDatabase(slotId, className) {
         }
 
         // Jalankan game!
+        isAssetsLoaded = false; 
         gameState = "PLAYING";
     })
     .catch(error => {
