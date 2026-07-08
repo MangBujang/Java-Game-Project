@@ -2,13 +2,17 @@
 var canvas = document.getElementById("gameCanvas");
 var ctx = canvas.getContext("2d");
 
+// Deklarasi Global Input & Flag Asset agar aman diakses antar-file
+const keysPressed = {};
+let isAssetsLoadedFlag = false; 
+
 // ====== 2. STATE MANAGEMENT ======
 let gameState = "MAIN_MENU"; 
 let currentSaveSlot = 1;
 
 let playerCharacter = {
     name: "",
-    selectedDragon: null
+    selectedCharacterName: null // Diubah dari 'selectedDragon' agar sinkron dengan game loop
 };
 
 // ====== 3. KONFIGURASI LAYAR SAVE SLOT (FALLBACK) ======
@@ -28,18 +32,12 @@ const slotScreen = {
     slotHeight: 80
 };
 
-
-// ====== Placeholder fungsi gameplay agar aman ======
-function updatePlayerLogic() {}
-function drawPlayer(ctx) {}
-
-// ====== 5. GAME LOOP UTAMA ======
+// ====== 4. GAME LOOP UTAMA ======
 function gameLoop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     switch (gameState) {
         case "MAIN_MENU":
-            // Memanggil fungsi menggambar dari menu-utama.js
             if (typeof drawMenuPanel === "function") {
                 drawMenuPanel(ctx, canvas.width, canvas.height);
             }
@@ -68,7 +66,6 @@ function gameLoop() {
         case "PLAYING":
             // Inisialisasi Karakter Secara Dinamis berdasarkan pilihan user saat masuk game
             if (!isAssetsLoadedFlag) {
-                // Ambil data nama kelas, jika null/kosong arahkan ke default WIZARD
                 let choosenClass = "WIZARD";
                 if (playerCharacter && playerCharacter.selectedCharacterName) {
                     choosenClass = playerCharacter.selectedCharacterName.toUpperCase().trim();
@@ -88,12 +85,14 @@ function gameLoop() {
                 console.log(`[SPAWN SUCCESS] Objek Player berhasil dibuat:`, hero);
             }
 
-            updatePlayerLogic();
+            // Memanggil fungsi logika & render dari player.js secara aman
+            if (typeof updatePlayerLogic === "function") updatePlayerLogic();
+            
             if (typeof drawGameMap === "function") {
                 drawGameMap(ctx);
             }
 
-            drawPlayer(ctx);
+            if (typeof drawPlayer === "function") drawPlayer(ctx);
             drawGameplayHUD(ctx);
             break;
     }
@@ -116,12 +115,15 @@ function drawGameplayHUD(ctx) {
     ctx.fillText(`HERO: ${playerCharacter.name}`, 20, 22);
 }
 
-window.onload = () => {
-    gameLoop();
-};
+// ====== INPUT LISTENER GLOBAL ======
+window.addEventListener("keydown", (e) => { 
+    keysPressed[e.key.toLowerCase()] = true; 
+});
 
 window.addEventListener("keyup", (event) => {
-    // Menghapus tombol dari memory saat diangkat dari keyboard
     delete keysPressed[event.key.toLowerCase()];
 });
 
+window.onload = () => {
+    gameLoop();
+};
