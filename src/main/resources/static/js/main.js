@@ -2,6 +2,8 @@
 var canvas = document.getElementById("gameCanvas");
 var ctx = canvas.getContext("2d");
 
+let cameraX = 0;
+
 // Deklarasi Global Input & Flag Asset agar aman diakses antar-file
 const keysPressed = {};
 let isAssetsLoadedFlag = false; 
@@ -87,6 +89,13 @@ function gameLoop() {
 
             // Memanggil fungsi logika & render dari player.js secara aman
             if (typeof updatePlayerLogic === "function") updatePlayerLogic();
+            if (hero) {
+                // Menempatkan hero di tengah layar (asumsi lebar canvas adalah 800)
+                cameraX = hero.x - 400; 
+
+                // Batasi kamera agar tidak bergeser melewati batas kiri map (0)
+                if (cameraX < 0) cameraX = 0;
+            }
             
             if (typeof drawGameMap === "function") {
                 drawGameMap(ctx);

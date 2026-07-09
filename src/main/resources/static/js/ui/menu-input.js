@@ -102,10 +102,13 @@ function submitCharacterName() {
             if (typeof loadAllSlotsFromDatabase === "function") {
                 loadAllSlotsFromDatabase();
             }
-            
-            // 5. 🔥 PERBAIKAN WORKFLOW: Alihkan gameState langsung ke menu pemilihan KARAKTER
-            gameState = "SELECT_CHARACTER"; 
-            console.log(`[WORKFLOW] Karakter ${finalName} tersimpan. Berpindah ke layar SELECT_CHARACTER.`);
+            // PANGGIL DI SINI SEBELUM MASUK MENU PILIH HERO
+                if (typeof loadCharacterClassesFromDatabase === "function") {
+                    loadCharacterClassesFromDatabase();
+                }
+                gameState = "SELECT_CHARACTER"; 
+                console.log(`[WORKFLOW] Karakter ${finalName} tersimpan. Berpindah ke layar SELECT_CHARACTER.`);
+                
         })
         .catch(err => {
             console.error("Error sinkronisasi H2:", err);

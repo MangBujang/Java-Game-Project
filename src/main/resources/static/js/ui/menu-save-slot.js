@@ -205,6 +205,10 @@ document.getElementById("gameCanvas").addEventListener("click", (event) => {
                 };
                 
                 if (playerCharacter.selectedCharacterName === "None") {
+                    // PANGGIL DI SINI SEBELUM PINDAH STATE
+                    if (typeof loadCharacterClassesFromDatabase === "function") {
+                        loadCharacterClassesFromDatabase();
+                    }
                     gameState = "SELECT_CHARACTER";
                 } else {
                     isAssetsLoaded = false;

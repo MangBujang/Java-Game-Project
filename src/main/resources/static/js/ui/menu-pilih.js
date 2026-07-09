@@ -1,12 +1,49 @@
+// ====== FUNGSI AMBIL DATA MASTER HERO DARI REST CONTROLLER BACKEND ======
+function loadCharacterClassesFromDatabase() {
+    fetch("/api/heroes") // Memanggil HeroController di Spring Boot
+        .then(response => {
+            if (!response.ok) throw new Error("Gagal mengambil data hero dari REST API");
+            return response.json();
+        })
+        .then(data => {
+            // Map data JSON dari Spring Boot ke struktur objek yang dibutuhkan oleh Canvas game kamu
+            characterOptions = data.map(heroDb => {
+                const upperName = heroDb.name.toUpperCase();
+                
+                // Ambil warna dan deskripsi dari mapper visual lokal di atas
+                const visual = classVisualMapper[upperName] || { color: "#95a5a6", description: "Petualang misterius." };
+                
+                return {
+                    id: heroDb.id,
+                    name: upperName,
+                    color: visual.color,
+                    description: visual.description,
+                    // Menyesuaikan dengan properti getter di Hero.java kamu (health, attack, defense)
+                    hp: heroDb.health || 100, 
+                    atk: heroDb.attack || 0,                       
+                    def: heroDb.defense || 0,                      
+                    x: 0, y: 0 // Koordinat X dan Y akan dihitung otomatis saat draw
+                };
+            });
+            console.log("[REST API SUCCESS] Kelas hero berhasil disinkronkan dari DB:", characterOptions);
+        })
+        .catch(error => {
+            console.error("Error sinkronisasi menu pilih karakter:", error);
+        });
+}
+
+
 // ====== 1. DATA DAN KOORDINAT DINAMIS KARTU CLASS ======
-let characterOptions = [
-    { name: "WIZARD", color: "#3498db", description: "Pengendali elemen sihir", hp: 80, atk: 45, def: 10, x: 0, y: 0 },
-    { name: "KNIGHT", color: "#e74c3c", description: "Pelindung garis depan", hp: 140, atk: 25, def: 35, x: 0, y: 0 },
-    { name: "ARCHER", color: "#2ecc71", description: "Penembak jitu jarak jauh", hp: 100, atk: 40, def: 18, x: 0, y: 0 }
-];
+let characterOptions = [];
+
+const classVisualMapper = {
+    "WIZARD": { color: "#3498db", description: "Pengendali elemen sihir jarak jauh." },
+    "KNIGHT": { color: "#e74c3c", description: "Pelindung tangguh di garis depan." },
+    "ARCHER": { color: "#2ecc71", description: "Penembak jitu dengan akurasi tinggi." }
+};
 
 const charCardConfig = {
-    width: 140,
+    width: 250,
     height: 250,
     gap: 30,
     yPosition: 160 // Posisi awal Y kartu
