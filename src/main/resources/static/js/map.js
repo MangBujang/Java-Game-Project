@@ -66,47 +66,51 @@ const tileTypes = {
 // 4. MODULE: BACKGROUND (DENGAN REPEATING PARALLAX)
 // =========================================================================
 function drawBackground(ctx) {
+    // 🔥 Pastikan mengambil ukuran canvas yang benar (1280x720)
     const w = canvas.width;
     const h = canvas.height;
 
-    // Ambil variabel global cameraX dari main.js (fallback ke 0 jika belum ada)
     const camX = typeof cameraX !== "undefined" ? cameraX : 0;
 
-    // 1. Langit (Sky): Statis / Diam (tidak dikalikan kamera)
-    if (imgSky.complete) ctx.drawImage(imgSky, 0, 0, w, h);
+    // 1. Langit (Sky): Digambar memenuhi 1280x720 secara statis
+    if (imgSky.complete) {
+        ctx.drawImage(imgSky, 0, 0, w, h);
+    }
     
-    // Fungsi pembantu untuk menggambar background bergulir secara mulus tanpa putus
+    // Perbaikan fungsi pembantu agar gambar menutup bagian kiri dan kanan tanpa bolong
     const drawLoopingLayer = (img, speedFactor) => {
         if (img.complete) {
-            // Hitung posisi x awal (bergeser mundur)
+            // Gunakan lebar gambar asli (naturalWidth) untuk looping pas, atau gunakan 'w' jika ingin distretch
+            // Di sini kita gunakan 'w' (1280) agar gambar dipaksa memenuhi layar lebar
             let x = -(camX * speedFactor) % w;
             
-            // Gambar potongan pertama
+            // Gambar potongan utama
             ctx.drawImage(img, x, 0, w, h);
             
-            // Gambar potongan kedua di sebelah kanannya agar menyambung saat bergulir
-            if (x < 0) {
-                ctx.drawImage(img, x + w, 0, w, h);
-            }
+            // Gambar potongan cadangan di kanan (jika bergerak ke kanan)
+            ctx.drawImage(img, x + w, 0, w, h);
+            
+            // Gambar potongan cadangan di kiri (jika bergerak ke kiri)
+            ctx.drawImage(img, x - w, 0, w, h);
         }
     };
 
-    // 2. Latar Belakang Hutan (Jungle Bg): Sangat lambat (efek paling jauh)
+    // 2. Latar Belakang Hutan (Jungle Bg)
     drawLoopingLayer(imgJungleBg, 0.1);
     
-    // 3. Pohon & Semak (Trees & Bushes): Agak lambat
+    // 3. Pohon & Semak (Trees & Bushes)
     drawLoopingLayer(imgTreesBushes, 0.3);
     
-    // 🔥 4. Rumput Liar Latar (Grasses): Kecepatan 0.4 (Berada di depan pepohonan latar)
+    // 4. Rumput Liar Latar (Grasses)
     drawLoopingLayer(imageGrasses, 0.4);
     
-    // 5. Lianas: Kecepatan sedang
+    // 5. Lianas
     drawLoopingLayer(imgLianas, 0.5);
     
-    // 6. Kunang-kunang (Fireflies): Kecepatan sedang
+    // 6. Kunang-kunang (Fireflies)
     drawLoopingLayer(imgFireflies, 0.6);
     
-    // 7. Jalan Berumput (Grass Road): Bergerak cepat mendekati kecepatan ubin asli
+    // 7. Jalan Berumput (Grass Road)
     drawLoopingLayer(imgGrassRoad, 0.8);
 }
 
@@ -149,7 +153,7 @@ function drawForeground(ctx) {
 
     // Pohon depan (Tree Face): Mengikuti ground (dikali 1.0)
     if (imgTreeFace.complete) {
-        let x = -(camX * 1.0) % w;
+        let x = -(camX * 0.8) % w;
         ctx.drawImage(imgTreeFace, x, 0, w, h);
         if (x < 0) {
             ctx.drawImage(imgTreeFace, x + w, 0, w, h);

@@ -38,7 +38,7 @@ class DynamicPlayer {
         this.frameX = 0;
         this.maxFrames = 8;
         this.frameTimer = 0;
-        this.frameInterval = 8; 
+        this.frameInterval = 3; 
 
         // Siapkan objek gambar kosong di memori
         this.imgIdle = new Image();
@@ -64,9 +64,10 @@ class DynamicPlayer {
         }
 
         // Batas Layar Canvas (Aman karena width sudah terdefinisi)
+        const maxMapWidth = 25 * 32; 
         if (this.x < 0) this.x = 0;
-        if (canvas && this.x > canvas.width - this.width / 3) {
-            this.x = canvas.width - this.width / 3;
+        if (this.x > maxMapWidth - (this.width / 4)) { 
+            this.x = maxMapWidth - (this.width / 4);
         }
 
         // Logika Lompat
@@ -83,6 +84,8 @@ class DynamicPlayer {
             this.y = this.groundLevel;
             this.velocityY = 0;
             this.isGrounded = true;
+        }else {
+            this.isGrounded = false;
         }
 
         // Input Menyerang
@@ -145,23 +148,25 @@ class DynamicPlayer {
 
         if (!currentImage.complete || currentImage.naturalWidth === 0) {
             ctx.fillStyle = "#ff00ff"; 
-            ctx.fillRect(this.x, this.y, this.width / 3, this.height / 3);
+            ctx.fillRect(this.x - cameraX, this.y, this.width / 3, this.height / 3); // Sesuaikan dengan cameraX saat loading
             
             ctx.fillStyle = "#ffffff";
             ctx.font = "10px sans-serif";
-            ctx.fillText("Loading Sprite...", this.x, this.y - 10);
+            ctx.fillText("Loading Sprite...", this.x - cameraX, this.y - 10);
             return; 
         }
 
         let sx = this.frameX * this.spriteWidth;
         let sy = 0;
 
-        const centerX = this.x + this.width / 2;
+        // 🔥 PERBAIKAN: Hitung posisi relatif terhadap kamera di layar monitor
+        const screenX = this.x - cameraX; 
+        const centerX = screenX + this.width / 2;
         const centerY = this.y + this.height / 2;
 
         if (this.direction === "LEFT") {
             ctx.save();
-            ctx.translate(centerX, centerY);
+            ctx.translate(centerX, centerY); // Sekarang menggunakan posisi layar yang benar
             ctx.scale(-1, 1);
             ctx.drawImage(
                 currentImage,
@@ -173,7 +178,7 @@ class DynamicPlayer {
             ctx.drawImage(
                 currentImage,
                 sx, sy, this.spriteWidth, this.spriteHeight,
-                this.x, this.y, this.width, this.height
+                screenX, this.y, this.width, this.height // Menggunakan screenX agar serasi
             );
         }
 

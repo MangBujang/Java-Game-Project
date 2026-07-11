@@ -90,13 +90,15 @@ function gameLoop() {
             // Memanggil fungsi logika & render dari player.js secara aman
             if (typeof updatePlayerLogic === "function") updatePlayerLogic();
             if (hero) {
-                // Menempatkan hero di tengah layar (asumsi lebar canvas adalah 800)
-                cameraX = hero.x - 400; 
+                cameraX = hero.x - 640; 
 
-                // Batasi kamera agar tidak bergeser melewati batas kiri map (0)
-                if (cameraX < 0) cameraX = 0;
+                if (cameraX < 0) {
+                    cameraX = 0;
+                }
             }
-            
+            const maxCameraX = (100 * 32) - canvas.width;
+            if (cameraX > maxCameraX) cameraX = maxCameraX;
+
             if (typeof drawGameMap === "function") {
                 drawGameMap(ctx);
             }
