@@ -64,7 +64,7 @@ class DynamicPlayer {
         }
 
         // Batas Layar Canvas (Aman karena width sudah terdefinisi)
-        const maxMapWidth = 25 * 32; 
+        const maxMapWidth = 100 * 32; 
         if (this.x < 0) this.x = 0;
         if (this.x > maxMapWidth - (this.width / 4)) { 
             this.x = maxMapWidth - (this.width / 4);
@@ -93,9 +93,25 @@ class DynamicPlayer {
             if (keysPressed["j"]) {
                 this.isAttacking = true;
                 this.animation = "ATTACK1";
+                this.frameX = 0; // Reset frame ke awal animasi
+
+                // 🔥 Pemicu Tembakan Projektil
+                if (this.job === "WIZARD") {
+                    this.shoot("magic");
+                } else if (this.job === "ARCHER") {
+                    this.shoot("arrow");
+                }
             } else if (keysPressed["k"]) {
                 this.isAttacking = true;
                 this.animation = "ATTACK2";
+                this.frameX = 0; // Reset frame ke awal animasi
+
+                // 🔥 Pemicu Tembakan Projektil (Tombol K)
+                if (this.job === "WIZARD") {
+                    this.shoot("magic");
+                } else if (this.job === "ARCHER") {
+                    this.shoot("arrow");
+                }
             }
         }
 
@@ -136,7 +152,45 @@ class DynamicPlayer {
 
             this.prevAnimation = this.animation;
         }
+
+        if (this.isAttacking && (this.animation === "ATTACK1" || this.animation === "ATTACK2")) {
+            // Jalankan deteksi sepanjang animasi menyerang, tapi batasi hanya 1x hit menggunakan flag hasHit
+            if (!this.hasHit && typeof enemies !== "undefined") {
+                for (let j = 0; j < enemies.length; j++) {
+                    let enemy = enemies[j];
+                    if (!enemy.isDead) {
+                        
+                        // 1. Hitung titik tengah objek (Center X) agar adil bagi sprite berukuran besar
+                        let playerCenterX = this.x + (this.width / 2);
+                        let enemyCenterX = enemy.x + (enemy.width / 2);
+                        
+                        // 2. Hitung jarak horizontal dari titik tengah ke titik tengah
+                        let distanceX = Math.abs(playerCenterX - enemyCenterX);
+                        let distanceY = Math.abs(this.y - enemy.y);
+                        
+                        // Jangkauan disesuaikan dengan besarnya sprite Knight (500px)
+                        if (distanceX < 250 && distanceY < 150) {
+                            console.log("Musuh terkena hit tebasan pedang!");
+                            
+                            this.hasHit = true; 
+                            
+                            if (typeof reportHeroAttack === "function") {
+                                reportHeroAttack(this.id || 1, enemy.id, enemy);
+                            }
+                            break; // Keluar dari loop setelah mengenai satu musuh terdekat
+                        }
+                    }
+                }
+            }
+        }
+
+        // Reset flag pembatas saat status menyerang selesai (kembali ke IDLE/RUN)
+        if (!this.isAttacking) {
+            this.hasHit = false;
+        }
     }
+
+    
 
     draw(ctx) {
         let currentImage = this.imgIdle;
@@ -203,6 +257,58 @@ class DynamicPlayer {
             }
         }
     }
+
+    shoot(type) {
+        let directionMultiplier = (this.direction === "LEFT") ? -1 : 1;
+        
+        // Atur posisi awal spawn di sekitar area senjata/tangan karakter
+        let spawnX = this.x + (this.width / 2) + (30 * directionMultiplier);
+        let spawnY = 400; 
+
+        // Pembuatan objek gambar khusus untuk proyektil ini
+        let projectileImg = new Image();
+        let maxFrames = 4;        // Default jumlah frame animasi proyektil
+        let spriteW = 32;         // Default ukuran 1 kotak frame di gambar aslinya
+        let spriteH = 32;
+        let displaySize = 48;     // Ukuran skala render proyektil di dalam layar game
+
+        if (type === "magic") {
+            projectileImg.src = "/assets/player/Wanderer Magican/Charge_2.png";
+            maxFrames = 6;       // Ganti sesuai jumlah frame spritesheet sihir Anda
+            spriteW = 64;        // Ganti sesuai lebar per frame gambar sihir Anda
+            spriteH = 64;
+            displaySize = 80;
+        } else if (type === "arrow") {
+            projectileImg.src = "/assets/player/Huntress 2/Sprites/Arrow/Move.png" // 🛠️ Sesuaikan path file Anda
+            maxFrames = 4;       // Ganti sesuai jumlah frame spritesheet panah Anda
+            spriteW = 32;        // Ganti sesuai lebar per frame gambar panah Anda
+            spriteH = 32;
+            displaySize = 40;
+        }
+
+        let newProjectile = {
+            x: spawnX,
+            y: spawnY,
+            speedX: 14 * directionMultiplier,
+            direction: this.direction,
+            type: type,
+            img: projectileImg,
+            
+            // Properti untuk menghandle animasi frame
+            frameX: 0,
+            maxFrames: maxFrames,
+            spriteWidth: spriteW,
+            spriteHeight: spriteH,
+            width: displaySize,
+            height: displaySize,
+            frameTimer: 0,
+            frameInterval: 4 // Kecepatan pergantian frame animasi peluru
+        };
+
+        if (typeof projectiles !== "undefined") {
+            projectiles.push(newProjectile);
+        }
+    }
 }
 
 // =========================================================================
@@ -234,6 +340,7 @@ class WizardPlayer extends DynamicPlayer {
         this.spriteHeight = 128;
         this.speed = 7;
         this.frameInterval = 3;
+        this.job = "WizardPlayer";
     }
 }
 
@@ -262,6 +369,7 @@ class KnightPlayer extends DynamicPlayer {
         this.spriteHeight = 120;
         this.speed = 9;         
         this.frameInterval = 3;
+        this.job = "KnightPlayer";
     }
 }
 
@@ -291,8 +399,11 @@ class ArcherPlayer extends DynamicPlayer {
         this.speed = 8;
         this.jumpPower = -17;   
         this.frameInterval = 5;
+        this.job = "ArcherPlayer";
     }
 }
+
+
 
 // =========================================================================
 // 3. VARIABEL STATE UTAMA EXPORT LOGIC
