@@ -1,10 +1,9 @@
 package com.dragonworld.game.model;
 
 import jakarta.persistence.*;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
+@Table(name = "hero") // Opsional: Memastikan nama tabel di database adalah 'hero'
 public class Hero {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -13,17 +12,23 @@ public class Hero {
     private int experience;
     private int level;
 
+    @Column(name = "posx") // Menyesuaikan ejaan database yang biasanya lowercase
     private int posX;
+    @Column(name = "posy")
     private int posY;
 
     private int health = 100;
+    
+    @Column(name = "max_health") // Menyesuaikan snake_case di database kamu
     private int maxHealth = 100;
+    
     private int attack = 25;
     private int defense = 15;
 
-
+    // Constructor Kosong (Wajib untuk JPA)
     public Hero() {}
 
+    // Constructor dengan parameter nama
     public Hero (String name) {
         this.name = name;
         this.experience = 0;
@@ -36,19 +41,16 @@ public class Hero {
         this.defense = 15;
     }
 
-    // Getter & Setter untuk ID
+    // ====== GETTER & SETTER STANDAR ======
     public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; } // Tambahkan ini
+    public void setId(Long id) { this.id = id; }
 
-    // Getter & Setter untuk Name
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 
-    // Getter & Setter untuk Experience
     public int getExperience() { return experience; }
     public void setExperience(int experience) { this.experience = experience; }
 
-    // Getter & Setter untuk Level (PENTING: tambahkan setter agar level bisa diupdate)
     public int getLevel() { return level; }
     public void setLevel(int level) { this.level = level; }
 
@@ -58,4 +60,16 @@ public class Hero {
     public int getPosY() { return posY; }
     public void setPosY(int posY) { this.posY = posY; }
 
+    // ====== 🔥 TAMBAHAN: GETTER & SETTER UNTUK STATISTIK SINKRONISASI GAME ======
+    public int getHealth() { return health; }
+    public void setHealth(int health) { this.health = health; }
+
+    public int getMaxHealth() { return maxHealth; }
+    public void setMaxHealth(int maxHealth) { this.maxHealth = maxHealth; }
+
+    public int getAttack() { return attack; }
+    public void setAttack(int attack) { this.attack = attack; }
+
+    public int getDefense() { return defense; }
+    public void setDefense(int defense) { this.defense = defense; }
 }

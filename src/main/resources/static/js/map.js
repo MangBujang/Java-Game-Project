@@ -12,6 +12,9 @@ imgJungleBg.src = "/assets/map_tiles/Battleground3/Bright/jungle_bg.png";
 const imgTreesBushes = new Image();
 imgTreesBushes.src = "/assets/map_tiles/Battleground3/Bright/trees&bushes.png";
 
+const imageGrasses = new Image();
+imageGrasses.src = "/assets/map_tiles/Battleground3/Bright/grasses.png";
+
 const imgLianas = new Image();
 imgLianas.src = "/assets/map_tiles/Battleground3/Bright/lianas.png";
 
@@ -60,24 +63,64 @@ const tileTypes = {
 };
 
 // =========================================================================
-// 4. MODULE: BACKGROUND
+// 4. MODULE: BACKGROUND (DENGAN REPEATING PARALLAX)
 // =========================================================================
 function drawBackground(ctx) {
+    // 🔥 Pastikan mengambil ukuran canvas yang benar (1280x720)
     const w = canvas.width;
     const h = canvas.height;
 
-    if (imgSky.complete) ctx.drawImage(imgSky, 0, 0, w, h);
-    if (imgJungleBg.complete) ctx.drawImage(imgJungleBg, 0, 0, w, h);
-    if (imgTreesBushes.complete) ctx.drawImage(imgTreesBushes, 0, 0, w, h);
-    if (imgLianas.complete) ctx.drawImage(imgLianas, 0, 0, w, h);
-    if (imgFireflies.complete) ctx.drawImage(imgFireflies, 0, 0, w, h);
-    if (imgGrassRoad.complete) ctx.drawImage(imgGrassRoad, 0, 0, w, h);
+    const camX = typeof cameraX !== "undefined" ? cameraX : 0;
+
+    // 1. Langit (Sky): Digambar memenuhi 1280x720 secara statis
+    if (imgSky.complete) {
+        ctx.drawImage(imgSky, 0, 0, w, h);
+    }
+    
+    // Perbaikan fungsi pembantu agar gambar menutup bagian kiri dan kanan tanpa bolong
+    const drawLoopingLayer = (img, speedFactor) => {
+        if (img.complete) {
+            // Gunakan lebar gambar asli (naturalWidth) untuk looping pas, atau gunakan 'w' jika ingin distretch
+            // Di sini kita gunakan 'w' (1280) agar gambar dipaksa memenuhi layar lebar
+            let x = -(camX * speedFactor) % w;
+            
+            // Gambar potongan utama
+            ctx.drawImage(img, x, 0, w, h);
+            
+            // Gambar potongan cadangan di kanan (jika bergerak ke kanan)
+            ctx.drawImage(img, x + w, 0, w, h);
+            
+            // Gambar potongan cadangan di kiri (jika bergerak ke kiri)
+            ctx.drawImage(img, x - w, 0, w, h);
+        }
+    };
+
+    // 2. Latar Belakang Hutan (Jungle Bg)
+    drawLoopingLayer(imgJungleBg, 0.1);
+    
+    // 3. Pohon & Semak (Trees & Bushes)
+    drawLoopingLayer(imgTreesBushes, 0.3);
+    
+    // 4. Rumput Liar Latar (Grasses)
+    drawLoopingLayer(imageGrasses, 0.4);
+    
+    // 5. Lianas
+    drawLoopingLayer(imgLianas, 0.5);
+    
+    // 6. Kunang-kunang (Fireflies)
+    drawLoopingLayer(imgFireflies, 0.6);
+    
+    // 7. Jalan Berumput (Grass Road)
+    drawLoopingLayer(imgGrassRoad, 0.8);
 }
 
 // =========================================================================
-// 5. MODULE: TILE MAP (FIX UTAMA DI SINI)
+// 5. MODULE: TILE MAP (PERBAIKAN PERGESERAN KAMERA)
 // =========================================================================
 function drawTiles(ctx) {
+  // Ambil variabel global cameraX dari main.js (fallback ke 0 jika belum ada)
+  const camX = typeof cameraX !== "undefined" ? cameraX : 0;
+
   for (let row = 0; row < gameMap.length; row++) {
     for (let col = 0; col < gameMap[row].length; col++) {
       
@@ -89,7 +132,7 @@ function drawTiles(ctx) {
         ctx.drawImage(
             imgTiles,
             t.sx, t.sy, TILE_SIZE, TILE_SIZE, 
-            col * TILE_SIZE,
+            (col * TILE_SIZE) - camX, // Posisi X dikurangi camX agar bergeser mundur
             row * TILE_SIZE,
             TILE_SIZE,
             TILE_SIZE
@@ -101,24 +144,28 @@ function drawTiles(ctx) {
 }
 
 // =========================================================================
-// 6. MODULE: FOREGROUND
+// 6. MODULE: FOREGROUND (PARALLAX DEPAN)
 // =========================================================================
 function drawForeground(ctx) {
     const w = canvas.width;
     const h = canvas.height;
+    const camX = typeof cameraX !== "undefined" ? cameraX : 0;
 
+    // Pohon depan (Tree Face): Mengikuti ground (dikali 1.0)
     if (imgTreeFace.complete) {
-        ctx.drawImage(imgTreeFace, 0, 0, w, h);
+        let x = -(camX * 0.8) % w;
+        ctx.drawImage(imgTreeFace, x, 0, w, h);
+        if (x < 0) {
+            ctx.drawImage(imgTreeFace, x + w, 0, w, h);
+        }
     }
 }
-
-
 
 // =========================================================================
 // 7. MAIN RENDER FUNCTION
 // =========================================================================
 function drawGameMap(ctx) {
     drawBackground(ctx);  // belakang
-    drawTiles(ctx);       // middle (map utama)
     drawForeground(ctx);  // depan
+    drawTiles(ctx);       // middle (map utama)
 }
