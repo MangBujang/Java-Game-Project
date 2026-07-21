@@ -66,10 +66,13 @@ function loadSelectedHeroFromServer(heroName) {
             // 🔥 SOLUSI CADANGAN: Karakter tetap dibuat secara lokal jika server offline
             if (heroName === "KNIGHT") {
                 hero = new KnightPlayer();
+                hero.id = 2
             } else if (heroName === "WIZARD") {
                 hero = new WizardPlayer();
+                hero.id = 1
             } else if (heroName === "ARCHER") {
                 hero = new ArcherPlayer();
+                hero.id = 3
             }
             
             // Set stats default agar game tetap bisa berjalan selama testing
@@ -128,7 +131,6 @@ function gameLoop() {
                 // 2. Tetap spawn musuh seperti biasa
                 enemies = [
                     new SimpleEnemy(101, 600, 365), // Y diubah ke 365 agar menapak tanah
-                    new SimpleEnemy(102, 900, 365)
                 ];
 
                 isAssetsLoadedFlag = true; 
@@ -285,17 +287,22 @@ window.onload = () => {
 const BASE_URL = "http://localhost:8081";
 
 function reportHeroAttack(heroId, enemyId, visualEnemyObject) {
+    // 1. Indikator Awal Tabrakan (Frontend)
+    console.log(`%c⚔️ [FRONTEND] Kontak Terdeteksi: Hero ID (${heroId}) menyerang Enemy ID (${enemyId})`, "color: #ffcc00; font-weight: bold;");
+
     if (!heroId || !enemyId) {
-        console.error("❌ ID tidak valid!", heroId, enemyId);
+        console.error(`❌ [FRONTEND ERROR] Gagal mengirim damage! ID tidak valid. HeroID: ${heroId}, EnemyID: ${enemyId}`);
+        console.warn("👉 Solusi: Pastikan Hero ID tidak undefined (cek fallback server) dan ID Musuh sesuai.");
         return;
     }
 
-    console.log("⚔️ Hero menyerang:", heroId, "->", enemyId);
-
-    // 🔥 efek langsung (biar terasa hit)
+    // Efek visual instan di layar game sebelum server merespons
     visualEnemyObject.changeState("HURT");
-    visualEnemyObject.hp -= 10;
+    console.log(`🎬 [VISUAL] Mengubah state musuh ke 'HURT'. Mengurangi HP lokal sementara (-10)`);
 
+    console.log(`📡 [NETWORK] Mengirim data ke server: ${BASE_URL}/api/combat/hero-attack...`);
+
+    // 2. Mengirim data ke Spring Boot
     fetch(`${BASE_URL}/api/combat/hero-attack`, {
         method: "POST",
         headers: {
@@ -306,20 +313,42 @@ function reportHeroAttack(heroId, enemyId, visualEnemyObject) {
             enemyId: enemyId
         })
     })
-    .then(res => res.json())
+    .then(res => {
+        // Cek status HTTP dari Spring Boot
+        if (!res.ok) {
+            throw new Error(`Server merespons dengan status HTTP ${res.status} (Bad Request/Internal Error)`);
+        }
+        return res.json();
+    })
     .then(data => {
-        console.log("✅ Response server:", data);
+        // 3. Indikator BERHASIL (Server + Supabase merespons sukses)
+        console.log("%c✅ [SERVER RESPONSE] Damage Berhasil Diterima!", "color: #2ed573; font-weight: bold;");
+        console.table({
+            "Pesan Server": data.message,
+            "Damage Masuk": data.damageDealt,
+            "Sisa HP Musuh (Supabase)": data.enemyHealth,
+            "Apakah Musuh Mati?": data.enemyIsDead,
+            "HP Hero Sekarang": data.heroHealth
+        });
 
-        // 🔥 sinkron HP dari server
+        // Sinkronisasi HP nyata dari database Supabase ke layar game
+        let oldHp = visualEnemyObject.hp;
         visualEnemyObject.hp = data.enemyHealth;
+        console.log(`🔄 [SYNCHRONIZE] HP Musuh di layar diperbarui: ${oldHp} -> ${visualEnemyObject.hp}`);
 
         if (data.enemyIsDead) {
+            console.log(`💀 [STATE] Enemy ID ${enemyId} telah mati! Memicu animasi DEAD.`);
             visualEnemyObject.isDead = true;
             visualEnemyObject.changeState("DEAD");
         }
     })
     .catch(err => {
-        console.error("❌ Error server:", err);
+        // 4. Indikator GAGAL (Koneksi putus / Database error)
+        console.error("%c❌ [SERVER ERROR] Jaringan Terputus atau Backend Crash!", "color: #ff4757; font-weight: bold;");
+        console.error("Detail Error:", err.message);
+        console.warn("👉 Analisis Masalah:");
+        console.warn("1. Apakah Spring Boot Anda di port 8081 sudah menyala?");
+        console.warn("2. Apakah ID Musuh di memory terdaftar di tabel database Supabase?");
     });
 }
 

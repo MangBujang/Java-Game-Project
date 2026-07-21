@@ -17,12 +17,13 @@ public class HeroService {
                 .orElseThrow(() -> new RuntimeException("Hero tidak ditemukan"));
 
         int baseEnemyHp = 100; 
-        int damageDealt = hero.getAttack(); // Default awal: 25
+        int damageDealt = hero.getAttack(); // Default awal: 25[cite: 21]
         
         int finalEnemyHp = baseEnemyHp - damageDealt;
         if (finalEnemyHp < 0) finalEnemyHp = 0;
 
         boolean isDead = (finalEnemyHp <= 0);
+        String message = "Hero menyerang enemy";
 
         if (isDead) {
             // 1. Tambah EXP
@@ -35,17 +36,27 @@ public class HeroService {
             if (calculatedLevel > hero.getLevel()) {
                 hero.setLevel(calculatedLevel);
                 
-                // Tingkatkan stats hero setiap naik level[cite: 3]
-                hero.setMaxHealth(hero.getMaxHealth() + 20); // Maks HP bertambah 20[cite: 3]
-                hero.setHealth(hero.getMaxHealth());         // HP langsung pulih penuh[cite: 3]
-                hero.setAttack(hero.getAttack() + 5);        // Serangan bertambah +5[cite: 3]
+                // Tingkatkan stats hero setiap naik level
+                hero.setMaxHealth(hero.getMaxHealth() + 20); // Maks HP bertambah 20
+                hero.setHealth(hero.getMaxHealth());         // HP langsung pulih penuh
+                hero.setAttack(hero.getAttack() + 5);        // Serangan bertambah +5
                 
                 System.out.println("SELAMAT! " + hero.getName() + " MENCAPAI LEVEL " + calculatedLevel);
             }
 
             heroRepository.save(hero);
+            message = "Enemy dikalahkan!";
         }
 
-        return new AttackResponse(finalEnemyHp, isDead);
+        // 🔥 PERBAIKAN: Gunakan constructor dengan 7 parameter yang sesuai dengan AttackResponse baru
+        return new AttackResponse(
+            message,
+            damageDealt,
+            finalEnemyHp,
+            isDead,
+            hero.getHealth(),
+            hero.getExperience(),
+            hero.getLevel()
+        );
     }
 }
