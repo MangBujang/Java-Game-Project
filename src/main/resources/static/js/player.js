@@ -153,31 +153,34 @@ class DynamicPlayer {
             this.prevAnimation = this.animation;
         }
 
+        // Ganti bagian hit-box serangan jarak dekat di player.js menjadi seperti ini:
+
         if (this.isAttacking && (this.animation === "ATTACK1" || this.animation === "ATTACK2")) {
-            // Jalankan deteksi sepanjang animasi menyerang, tapi batasi hanya 1x hit menggunakan flag hasHit
             if (!this.hasHit && typeof enemies !== "undefined") {
                 for (let j = 0; j < enemies.length; j++) {
                     let enemy = enemies[j];
                     if (!enemy.isDead) {
                         
-                        // 1. Hitung titik tengah objek (Center X) agar adil bagi sprite berukuran besar
-                        let playerCenterX = this.x + (this.width / 2);
-                        let enemyCenterX = enemy.x + (enemy.width / 2);
-                        
-                        // 2. Hitung jarak horizontal dari titik tengah ke titik tengah
-                        let distanceX = Math.abs(playerCenterX - enemyCenterX);
-                        let distanceY = Math.abs(this.y - enemy.y);
-                        
-                        // Jangkauan disesuaikan dengan besarnya sprite Knight (500px)
-                        if (distanceX < 250 && distanceY < 150) {
-                            console.log("Musuh terkena hit tebasan pedang!");
+                        // 🔥 PERBAIKAN FORMULA HIT-BOX:
+                        // Mengingat width Knight = 500, kita ambil jangkauan tebasan dari pusat sprite-nya
+                        let attackRange = 200; // Lebar ayunan pedang
+                        let attackX = (this.direction === "RIGHT") ? (this.x + this.width * 0.3) : (this.x + this.width * 0.3 - attackRange);
+
+                        // Tambahkan log bantuan untuk melihat pergerakan hit-box di console
+                        // console.log(`[DEBUG COLLISION] AttackX: ${attackX}, EnemyX: ${enemy.x}`);
+
+                        // Deteksi tabrakan kotak serang dengan musuh
+                        if (attackX < enemy.x + enemy.width &&
+                            attackX + attackRange > enemy.x &&
+                            Math.abs(this.y - enemy.y) < 200) { // Toleransi tinggi tabrakan
                             
+                            console.log("%c💥 [FRONTEND] Musuh terkena hit tebasan pedang!", "color: #ff4757; font-weight: bold;");
                             this.hasHit = true; 
                             
                             if (typeof reportHeroAttack === "function") {
-                                reportHeroAttack(this.id || 1, enemy.id, enemy);
+                                reportHeroAttack(this.id || 2, enemy.id, enemy); // Gunakan ID hero dinamis
                             }
-                            break; // Keluar dari loop setelah mengenai satu musuh terdekat
+                            break;
                         }
                     }
                 }
@@ -340,7 +343,7 @@ class WizardPlayer extends DynamicPlayer {
         this.spriteHeight = 128;
         this.speed = 7;
         this.frameInterval = 3;
-        this.job = "WizardPlayer";
+        this.job = "WIZARD";
     }
 }
 
@@ -369,7 +372,7 @@ class KnightPlayer extends DynamicPlayer {
         this.spriteHeight = 120;
         this.speed = 9;         
         this.frameInterval = 3;
-        this.job = "KnightPlayer";
+        this.job = "KNIGHT";
     }
 }
 
@@ -399,7 +402,7 @@ class ArcherPlayer extends DynamicPlayer {
         this.speed = 8;
         this.jumpPower = -17;   
         this.frameInterval = 5;
-        this.job = "ArcherPlayer";
+        this.job = "ARCHER";
     }
 }
 
